@@ -1,0 +1,13 @@
+bin.name = "cargo-upgrade"
+args = ["upgrade", "a"]
+status = "success"
+stdout = """
+cargo-list-test-fixture:
+"""
+stderr = """
+    Upgrading a v1.0 -> v99999.0.0
+"""
+fs.sandbox = true
+
+[env.add]
+CARGO_IS_TEST="1"

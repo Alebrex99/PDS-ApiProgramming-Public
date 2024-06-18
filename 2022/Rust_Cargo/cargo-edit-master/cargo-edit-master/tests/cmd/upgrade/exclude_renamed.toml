@@ -1,0 +1,13 @@
+bin.name = "cargo-upgrade"
+args = ["upgrade", "--exclude", "rx"]
+status = "success"
+stdout = """
+cargo-list-test-fixture:
+"""
+stderr = """
+    Upgrading toml_edit v0.1.5 -> v99999.0.0
+"""
+fs.sandbox = true
+
+[env.add]
+CARGO_IS_TEST="1"

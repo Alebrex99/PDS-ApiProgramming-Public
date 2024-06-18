@@ -1,0 +1,20 @@
+bin.name = "cargo-upgrade"
+args = ["upgrade", "--workspace"]
+status.code = 1
+stdout = ""
+stderr = """
+Error: Failed to get workspace metadata
+
+Caused by:
+    `cargo metadata` exited with an error: error: failed to parse manifest at `[CWD]/Cargo.toml`
+    
+    Caused by:
+      could not parse input as TOML
+    
+    Caused by:
+      expected an equals, found an identifier at line 1 column 6
+"""
+fs.sandbox = true
+
+[env.add]
+CARGO_IS_TEST="1"

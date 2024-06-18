@@ -1,0 +1,3 @@
+C:/Users/Utente/CLionProjects/polimorfismo/cmake-build-debug/CMakeFiles/polimorfismo.dir
+C:/Users/Utente/CLionProjects/polimorfismo/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Utente/CLionProjects/polimorfismo/cmake-build-debug/CMakeFiles/rebuild_cache.dir
