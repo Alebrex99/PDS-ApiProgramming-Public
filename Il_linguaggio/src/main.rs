@@ -1,7 +1,3 @@
-struct prova{
-    x: i32,
-    y: i32,
-}
 
 struct S(i32);
 /*potrei creare oggetti come S(10) e S(20) e poi fare operazioni tra di essi
@@ -42,6 +38,26 @@ fn f_ref<'a>() -> &'a i32{
     //return r; //non pui tornare un riferimento ad una variabile locale che muore a fine funzione
     return &0;
 }
+
+//-----------------------------TIPI COMPOSTI----------------------------
+mod module1{
+    pub struct Test{
+        x: i32,
+        y: i32,
+    }
+    pub fn f() -> Test{
+        let t = Test { x: 1, y: 2 };
+        let t1 = Test {x,y};
+        t1
+    }
+}
+use module1::Test;
+fn modulo1(){
+    let t = module1::f();
+}
+
+
+
 
 static mut S_GLOBAL: S = S(10);
 const S_CONST: S = S(10);
@@ -87,8 +103,8 @@ fn main() {
     let mut a:[i32; 4] = [1,2,3,4]; //array di 4 elementi
     let slice = &mut a[1..3]; //prendi un riferimento a un sottoinsieme di a, da 1 a 3
     //a[2] = 3; //value borrowed da slice
-    let terzo = slice.get(0);
-    println!("SLICE : {:?}", terzo.unwrap());
+    let primo = slice.get(0);
+    println!("SLICE : {:?}", primo.unwrap());
     //println!("{:?}", slice); //stampa [2,3] -> error : durante la vita di slice, a[2] è stato modificato
     //println!("{}", a[f(10)]);//error : index out of bounds --> PANIC!!
     /*in C dove non c'è consapenvolezza lunghezza ti fa accedere, qui invece essendo ARRAY un tipo di dato
@@ -167,19 +183,15 @@ fn main() {
     //1) movimento/copia di riferimenti : si può sempre
     let r_copy = r;
     println!("{}", r_copy); //stampa hello
-
-    //2) movimento di riferimenti e modifica originale
-    let s_moved = s; //sposta s in s_moved
-    //println!("{}", s); //error : value borrowed here after move
-
-    //3) ritorno da una funzione
+    //2) ritorno da una funzione
     let r_function = f_local();
 
     //RIFERIMENTO MUTABILE = PRESTITO MUTABILE
     let mut string = String::from("hello_mutable");
     let r1 = &mut string;
-    let string_move = string; //sposta string in string_move
-    //println!("{}", string); //error : value borrowed here after move
+    //let string_move = string; //ERROR: muovi string in string_move = modifica mentre R1 in vita
+    //println!("{}", string); //ERROR: leggi string mentre R1 mutabile in vita
+    println!("{}", r1); //error : value borrowed here after move
 
     //TRATTO COPY
     let mut var_copy: i32 = 10;
@@ -187,4 +199,14 @@ fn main() {
     var_copy = 3;
     println!("{}", var_copy); //stampa 3
     println!("{}", var_copy2); //stampa 10
+
+    //MOVIMENTO
+    let mut str = String::from("hello");
+    let str2 = str;
+    //let str3 = str; //error : value borrowed here after move
+
+
+    //---------------------------TIPI COMPOSTI---------------------------------
+    println!("----------------TIPI COMPOSTI-----------------");
+
 }
