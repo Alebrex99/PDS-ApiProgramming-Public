@@ -1,2 +1,4 @@
+mod solution;
+
 fn main() {
 }

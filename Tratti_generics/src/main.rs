@@ -1,19 +1,24 @@
+mod tratti;
+
 use std::num::FpCategory::Nan;
 use std::ops::{Deref, DerefMut};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use tratti::Cilindro;
+use tratti::Figura3D;
+use tratti::CilindroGeneric;
 
+//--------------------------GESTIONE TRATTO CUSTOM--------------------------------------
 /*tratti come figure geometriche: sto descrivendo la struttura di un possibile
 comportamento; se ho una figura 2D posso calcolare perimetro /area.
-&self : il perimetro /area lo claoclo a partire dall'obj che lo implementa. il &self di FIGURA2D sarà
+&self : il perimetro /area lo calcolo a partire dall'obj che lo implementa. il &self di FIGURA2D sarà
 il riferimento all'oggetto che implementa figura 2D*/
 trait Figura2D{
     fn perimetro(&self) -> f64;
     fn area(&self) -> f64;
 }
-
 //struttuca cerchio può implementare il tratto Figura2D
 #[derive(Debug)]
 struct Cerchio{
@@ -27,7 +32,6 @@ impl Figura2D for Cerchio{
         //perimetro di un cerchio
         2.0 * std::f64::consts::PI * self.r
     }
-
     fn area(&self) -> f64 {
         std::f64::consts::PI * self.r * self.r
     }
@@ -37,7 +41,6 @@ impl PartialEq for Cerchio{
         self.r == other.r
     }
 }
-
 impl Deref for Cerchio{
     type Target = f64; //dire a cosa mi usi come puntatore; quindi il cerchio può essere usato ora come un puntatore a un f64
     fn deref(&self) -> &Self::Target { //Responsabile di restituirmi un puntatore a qualcosa interno al mio cerchio:
@@ -65,6 +68,7 @@ impl Figura2D for Punto{
     }
 }
 
+//------------------------------PROVE GENERICHE --------------------------------------
 struct Test;
 trait T3 {
     type AssociatedType;
@@ -82,7 +86,6 @@ impl<T> Drop for MyBox<T> {
     fn drop(&mut self) {
         println!("Dropping Box<i32> @{:p}", self.0);
     }
-
 }
 
 //--------------------COMPORTAMENTO POLIMORFICO: -----------------
@@ -119,7 +122,6 @@ fn main() {
     quindi deve avere il puntatore al DATO e la VTABLE ASSOCIATA IN MODO CHE SI POSSA RISOLVERE a caso punta davvero
     N.B.: verrà messa la VTABLE relativa a cosa quell'altro sta aspettando*/
 
-
     //-----------------FAT POINTER: PUNTATORE AL DATO + PUNTATORE ALLA VTABLE = 16 byte---------------
     /*i primi 8 byte puntano al cerchio o al punto, ma lui sa solo che puntano
     non sa cosa realmente sia, i secondi 8 puntano alla VTABLE di rust
@@ -136,11 +138,32 @@ fn main() {
     sa C è un cerchio e conosce quali siano i suoi metodi virtuali (stessa cosa con p)*/
 
 
+    //-------------------------------DEFINIRE E USARE I TRATTI---------------------------------
+    println!("------------DEFINIRE E USARE I TRATTI--------------");
+    let zero :i32 = Default::default(); //0
+    let zero = i32::default(); //stessa cosa
+    println!("zero = {}", zero);
+
+    //CILINDRO IN MODULO TRATTI.RS
+    let cilindro = Cilindro{raggio: 10.0, altezza: 20.0};
+    println!("il volume del cilindro è: {}", cilindro.volume()); //6283.185307179
+    Cilindro::associated(10.0); //10.0
+    Box::new(cilindro).prova(); //Prova
+
+    //OGGETTO TRATTO &DYN + OGGETTO
+    let cerchio = Cerchio{xc: 0.0, yc: 1.0, r: 10.0}; // grande 24 byte = 8 di xc, 8 di yc, 8 di r
+    let oggetto_tratto: &dyn Figura2D = &cerchio;
+    println!("VTABLE: {}", std::mem::size_of_val(oggetto_tratto)); //
+    let oggetto_tratto_box :Box<&dyn Figura2D> = Box::new(&c);
+    println!("VTABLE: {}", std::mem::size_of_val(*oggetto_tratto_box));
+
+
     //------------------DERIVE + IMPLEMENTAZIONE TRATTI: DEBUG, DISPLAY, EQ, PARTIALEQ------------------
+    println!("------------DERIVE + IMPLEMENTAZIONE TRATTI: DEBUG, DISPLAY, EQ, PARTIALEQ--------------");
     //DERIVE DEBUG e DISPLAY: posso stampare c e p
     println!("il cerchio {:?} ha perimetro {}", c, c.perimetro()); //stampa una rapp interna {xc: 0.0, yc: 1.0, r: 10.0} ha perimetro 62.83185307179586
 
-    //RELAZIONI D'ORDINE: FATTQ CON [#DERIVE (PARTIALEQ)]
+    //RELAZIONI D'ORDINE: FATTO CON [#DERIVE (PARTIALEQ)]
     let c2 = Cerchio{xc: 0.0, yc: 1.0, r: 10.0};
     /*CON [#DERIVE ]: l'uguaglianza viene fatta in automatico su tutti i valori del cerchio*/
     println!("{:?} == {:?} ? {}",c, c2, c==c2); //true, cambiando uno solo dei valori risponde false
@@ -153,6 +176,12 @@ fn main() {
     let c2_none = Cerchio{xc: 0.0, yc: 1.0, r: std::f64::NAN};
     println!("{:?} == {:?} ? {}",c1_none, c2_none, c1_none==c2_none); //FALSE, perchè NAN != NAN
 
+    //MIEI ESEMPI : PARTIAL EQ VS EQ
+    let mut cilindro2 = Cilindro{raggio: 10.0, altezza: 20.0};
+    println!("{:?} == {:?} ? {}",cilindro2, cilindro2, cilindro2==cilindro2); //true
+    let cilindro_copy = cilindro2; //è una copia perchè hai derivato COPY + CLONE
+    let cilindro_ref = &mut cilindro2;
+    (*cilindro_ref).raggio = 20.0;
 
     //---------------------TRATTO DEREF -> PUOI LEGGERLO COME PUNTATORE------------------------
     /*Normalmente prendi riferimento a c, ma siccome impl il tratto DEREF , cosi c.deref() prende il
@@ -176,6 +205,12 @@ fn main() {
     println!("DEREF MUT: il raggio di c è : {:?}", c4);
     (*c4).abs(); //posso fare operazioni su c4 come se fosse un puntatore, ma non lo è, riconosce in automatico ch è un f64
     //oppure posso fare c4.abs() in rust
+
+
+    //------------------------------------TIPI GENRICI--------------------------------------
+    println!("------------TIPI GENERICI--------------");
+    let c_generic = CilindroGeneric{raggio: 10, altezza: 20};
+    println!("il volume del cilindro generico è: {}", c_generic.volume()); //2000
 
 
     //-------------------------------------ESEMPI FAT-SMART POINTER----------------------------------------

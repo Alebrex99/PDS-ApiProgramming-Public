@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 struct P(i32);
 impl Drop for P {
     fn drop(&mut self) {
@@ -8,7 +10,34 @@ impl Drop for P {
 
 fn main() {
     //-------------------------ITERATORI E POSSESSO : ITERATORI CONSUMANO O NO IL CONTENITORE---------------------------
+    //PROVE PERSONALI
+    println!("-----------------PROVE PERSONALI-----------------");
+    let mut v4 = vec![1,2,3,4,5,6];
+    //v4.next(); //non puoi perchè VEC impl solo INTO ITERATOR, ovvero prima devi trasformarlo in iteratore
+    //let mut it = IntoIterator::into_iter(v4); //into_iter() -> restituisce un iteratore
+
+    //USANDO LE FUNZIONI PREDISPOSTE DAL VEC PER TRASFORMARE IN ITERATOR
+    let mut iteratore = v4.iter_mut(); //iter_mut() -> restituisce un iteratore mutabile
+    let prossimo_dato = iteratore.next(); //next() -> restituisce un Option<&mut T>
+    let dato = prossimo_dato.unwrap(); //unwrap() -> restituisce il valore Option<T> se Some(T)
+    println!("{}", dato); //posso perchè iter_mut() -> restituisce un iteratore mutabile
+
+    for x in v4.iter(){
+        println!("{}", x);
+    }
+
+    let mut v5 = vec![1,2,3,4,5,6];
+    v5 = v5.iter_mut(). //NON VIENE MODIFICATO L'ORIGINALE COSI
+        map(|n| *n * 2).collect();
+    println!("v5: {:?}", v5);
+    //println!("{:?}", v_final);
+
+    let mut v6 = vec![1,2,3,4,5,6];
+    v6.iter_mut().for_each(|n| *n*=2); //SOLO COSI VIENE MODIFICATO ON PLACE L'ORIGINALE
+    println!("v6: {:?}", v6);
+
     //CONSUMO COMPLETO CONTENITORE
+    println!("-----------------ITERATOR - INTO ITERATOR-----------------");
     let v = vec![1, 2, 3, 4, 5, 6];
     for x in v { //sbriciola v e lo consuma
         println!("{}", x);

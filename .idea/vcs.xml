@@ -2,16 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Esercitazione1/ff-slug" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Esercitazione1/naval_battle" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Esercitazione2/complex_numbers" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Esercitazione2/ff-slug" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Gestione_Errori" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Il_linguaggio" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Input_Output_files" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Iteratori" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Lifetime_Funzioni" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/Tratti_generics" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/rust1" vcs="Git" />
   </component>
 </project>

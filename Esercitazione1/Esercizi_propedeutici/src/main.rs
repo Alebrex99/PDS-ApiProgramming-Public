@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::time::SystemTime;
 
 enum Error {
@@ -65,7 +66,16 @@ impl Node {
     fn count(&self, count: u32) -> Self{
         Node::from_size_count(self.name.clone(), self.size, count)
     }
+    fn toString(&self)-> String{
+        format!("Chiamata a toString : {}", self.name)
+    }
 }
+impl Display for Node{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result{
+        write!(f, "Formattazione (toString) di Node {} size {} count {}", self.name, self.size, self.count)
+    }
+}
+
 impl Drop for Node {
     fn drop(&mut self) {
         println!("Dropping Node {}", self.name);
@@ -88,4 +98,7 @@ fn main() {
     let node = Node::new(String::from("node")).size(10).count(5);
     //droppi le prime due strutture NODE perchè ad ongi chiamata ne crei una e riassegni la vecchia variabile node a quella nuova droppando la vecchia
     println!("Node size is {} and count is {}", node.size, node.count);
+    println!("{}", node);
+    println!("{}", node.toString());
+
 }

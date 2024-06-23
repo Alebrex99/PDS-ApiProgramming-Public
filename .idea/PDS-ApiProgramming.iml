@@ -33,6 +33,7 @@
       <sourceFolder url="file://$MODULE_DIR$/Tratti_generics/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rust1/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Esercitazione1/Esercizi_propedeutici/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Esercitazione3/Esercizio1/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/2022/Esercitazione1/capitalize/target" />
       <excludeFolder url="file://$MODULE_DIR$/2022/PolimorfismoRust/target" />
       <excludeFolder url="file://$MODULE_DIR$/2022/Rust_Cargo/cargo-edit-master/cargo-edit-master/target" />
@@ -60,6 +61,7 @@
       <excludeFolder url="file://$MODULE_DIR$/rust1/target" />
       <excludeFolder url="file://$MODULE_DIR$/2022/isbn-verifier/sol/target" />
       <excludeFolder url="file://$MODULE_DIR$/Esercitazione1/Esercizi_propedeutici/target" />
+      <excludeFolder url="file://$MODULE_DIR$/Esercitazione3/Esercizio1/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

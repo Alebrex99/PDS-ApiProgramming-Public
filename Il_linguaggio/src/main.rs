@@ -42,8 +42,8 @@ fn f_ref<'a>() -> &'a i32{
 //-----------------------------TIPI COMPOSTI----------------------------
 mod module1{
     pub struct Test{
-        x: i32,
-        y: i32,
+        pub x: i32,
+        pub y: i32,
     }
     pub fn f() -> Test{
         let t = Test { x: 1, y: 2 };
@@ -53,7 +53,8 @@ mod module1{
 }
 use module1::Test;
 fn modulo1(){
-    let t = module1::f();
+    let t = Test {x: 1, y: 2};
+    let t1 = module1::f();
 }
 
 
@@ -90,6 +91,7 @@ fn main() {
 
     //-----------------------TUPLE----------------------------------
     let tupla = (1, "ciao", true);
+    let tupla2 : (i32) = (1);
     tupla.0;
 
 

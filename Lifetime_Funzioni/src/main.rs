@@ -4,6 +4,9 @@ use std::num::ParseIntError;
 fn lifetime<'b, 'c>(x: &'b S, y: &'c S) -> &'c u8{
     & y.0
 }
+fn f<'a, 'b>(i: &'a i32, v: &'b mut Vec<&'a i32>) {
+    v.push(i);
+}
 struct S(u8);
 
 
@@ -61,8 +64,21 @@ fn main() {
     let v2 = v1;
     println!("{}",r);
 
+    let stringa = "ciao";
+    let n = 42;
+    let mut vettore: Vec<&i32> = Vec::new();
+    f(&n, &mut vettore);
+    println!("{:?}", vettore);
+
 
     //---------------------------FUNZIONI LAMBDA E DI ORDINE SUPERIORE (GEN)------------------------
+    println!("---------------------FUNZIONE LAMBDA SEMPLICE---------------------");
+    //FUNZIONE LAMBDA-CHIUSURA -TRATTI
+    let i =5;
+    let mut _vec: Vec<i32> = Vec::with_capacity(10);
+    let lambda = move || {_vec};
+    //_vec.push(10); //errore
+
     //FUNZIONE LAMBDA SEMPLICE : GENERATORE DI NOMI
     for i in 2..5{
         let f = |v| v*i; /*variabile f è una funzione lambda
@@ -108,7 +124,13 @@ fn main() {
     println!("Variabile consumata, ma è int con tratto Copy {}", j);//j è variabile libera consumata da f3 ma incrementa il tratto COPY(no problem)
     //println!("{} ", stringa_moved); //error perchè stringa_moved è stata consumata da f3
 
+    let y = Box::new(10);
+    let f_ex = move |x: Box<i32>| {y};
+    //viene generata una tupla in STACK con 1 campo (y) -> muovi il puntatore a BOX allo heap dentro la tupla
+
+
     //----------------------OPERAZIONI TRAMITE LE LAMBDA FUNCTIONS----------------------------------
+    println!("---------------------OPERAZIONI TRAMITE LE LAMBDA FUNCTIONS---------------------");
     /*spesso abbiamo bisogno di fare cose sopra vettori di valori:
     tutti i valori di V vengono passati ad 1 a uno nella chiusura passata. LA CHIUSURA in realtà non
     cattura nulla e si limita solo ad operare sul mio parametro facendo cose*/
