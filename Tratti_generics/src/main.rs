@@ -1,11 +1,13 @@
 mod tratti;
 
+use std::borrow::Cow;
 use std::num::FpCategory::Nan;
 use std::ops::{Deref, DerefMut};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::sync::{Arc, Condvar, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{hint, thread};
 use tratti::Cilindro;
 use tratti::Figura3D;
 use tratti::CilindroGeneric;
@@ -87,6 +89,16 @@ impl<T> Drop for MyBox<T> {
         println!("Dropping Box<i32> @{:p}", self.0);
     }
 }
+
+#[derive(Debug)]
+struct TestCopy(i32);
+impl Clone for TestCopy {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl Copy for TestCopy {}
+
 
 //--------------------COMPORTAMENTO POLIMORFICO: -----------------
 //se ho una funzione che accetta (è chiamato su) un oggetto di TIPO FIGURA2D(come il riferimento ad interfaccia in java)
@@ -206,6 +218,13 @@ fn main() {
     (*c4).abs(); //posso fare operazioni su c4 come se fosse un puntatore, ma non lo è, riconosce in automatico ch è un f64
     //oppure posso fare c4.abs() in rust
 
+    //TRATTO COPY
+    let test = TestCopy(10);
+    let test2 = test.clone(); //test2 è una copia di test
+    let test3 = test; //test3 è una copia di test
+    println!("{:?}", test2.0); //TestCopy
+
+
 
     //------------------------------------TIPI GENRICI--------------------------------------
     println!("------------TIPI GENERICI--------------");
@@ -224,7 +243,7 @@ fn main() {
     println!("&b contiene l'indirizzo su stack del puntatore b a BOX, è : {:p}", &b); //4
     let rc = Rc::new(b); // b moved (consumato) in rc, su heap
     let rc_ref = &rc; // su stack, puntatore allo smart pointer Rc
-    println!("rc = {:p}, rc_ref = {:p}", rc, rc_ref); //5
+    println!("rc = {:p}, rc_ref = {:p}", rc, rc_ref);
     let mut rc_clone = Rc::clone(&rc);
     //*rc_clone = Box::new(6); //error: cannot assign perchè RC è copia puntatore immutabile (non impl DEREF MUT, solo DEREF)
     let rc_clone2 = Rc::clone(&rc);
@@ -256,6 +275,7 @@ fn main() {
         /*permette sia di avere un &mut che un & del valore di tipo T in RECELL, che
         di poter avere un REF (in lettura) ma anche capace di mutare il dato contenuto (come per CELL<T>)*/
         let mut m = ptr.borrow_mut(); //prendi un riferimento mut a 5 (il contenuto T di RefCell)
+        println!("{}", *m);
         assert!(ptr.try_borrow().is_err());
         *m = 6;
     }{
@@ -264,64 +284,12 @@ fn main() {
         assert!(*m == 6);
     }
 
-
-    //----------------------------------THREADS + ARC + MUTEX ------------------------------------
-    println!("------------THREADS + ARC + MUTEX--------------");
-    //MUTEX NON E' COPY, VIENE MOSSO
-    let mutex = Mutex::new(0); //non condivisibile cosi, non implementa il tratto COPY
-    let mutex_moved = mutex; //questo lo muove solamente, per copiare il riferimento dobbiamo usare ARC
-    //println!("{:?}", mutex); //error: value borrowed here after move
-    let mutex_moved = Arc::new(mutex_moved); //condivisibile
-    let mutex_copy = mutex_moved.clone(); //crea un riferimento solo condivisibile
-    let mut lock = mutex_moved.lock().unwrap(); //prendi un riferimento mutabile al contenuto del MUTEX
-    println!("{}", *lock); //0
-
-    //RIFERIMENTO A MUTEX: BORROW
-    let mutex2 = Mutex::new(0);
-    let a = &mutex2; //borrowed possibile solo in lettura
-    println!("{:?}", *a); //Mutex { data: 0 }
-
-    //ESEMPIO DI CONDIVISIONE DI DATI TRA THREADS
-    let a: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
-    let a1: Arc<Mutex<i32>> = a.clone();
-    let a2: Arc<Mutex<i32>> = a.clone();
-
-    let t1 = thread::spawn(move || {
-        for _ in 0..10_000_000 {
-            let mut l = a1.lock().unwrap();
-            *l += 1;
-
-        }
-    });
-
-    let t2= thread::spawn(move || {
-        for _ in 0..10_000_000 {
-            let mut l = a2.lock().unwrap();
-            *l += 1;
-        }
-    });
-    t1.join().unwrap();
-    t2.join().unwrap();
-
-    println!("{}", a.lock().unwrap());
+    //COW: CLONE ON WRITE
+    let vett = vec![1,2,3,4,5];
+    let cow = Cow::from(vett); //k è un riferimento a 5
 
 
-    //THREADS SHARED DATA
-    let shared_data = Arc::new(Mutex::new(Vec::new()));
-    let mut threads = vec![];
-    for (i) in (0..10)
-    {
-        //let data_copy = shared_data; //NO : non impl COPY
-        let data = shared_data.clone(); //duplicazione del possesso
-        threads.push(thread::spawn(move || { //data è ceduto al thread
-            let mut v = data.lock().unwrap(); //v è di tipo MutexGuard<T>
-            v.push(i); //quando v esce dall scope, il lock
-        })); //viene rilasciato
-        //println!("{:?}", data);
-    }
-    for t in threads { t.join().unwrap(); }
-    //come stampo threads?
-    let v = shared_data.lock().unwrap();
-    println!("{:?}", *v); //stampa [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+
 
 }
