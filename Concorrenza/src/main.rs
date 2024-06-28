@@ -2,11 +2,37 @@ use std::sync::mpsc::{channel, sync_channel};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread;
 
+
+struct SharedData<T>{
+    data: Mutex<Vec<T>>,
+    condvar: Condvar
+}
+
+impl<T> SharedData<T> {
+    fn new(data: Vec<T>) -> Self{
+        SharedData {
+            data: Mutex::new(data),
+            condvar: Condvar::new()
+        }
+    }
+    fn push(&self, value: T) {
+        let mut data = self.data.lock().unwrap();
+        data.push(value);
+        self.condvar.notify_one();
+    }
+    fn pop(&self) -> Option<T> {
+        let mut data = self.data.lock().unwrap();
+        if data.is_empty() {
+            data = self.condvar.wait(data).unwrap();
+        }
+        data.pop()
+    }
+}
+
 fn main() {
 
-    //-------------------------------------CONCORRENZA: STATO CONDIVISO----------------------------------
-    //----------------------------------THREADS + ARC + MUTEX ------------------------------------
-    println!("------------THREADS + ARC + MUTEX--------------");
+    //-------------------------------------CONCORRENZA: STATO CONDIVISO THREADS + ARC + MUTEX----------------------------------
+    println!("------------CONCORRENZA STATO CONDIVISO: THREADS + ARC + MUTEX--------------");
     //MUTEX NON E' COPY, VIENE MOSSO
     let mutex = Mutex::new(0); //non condivisibile cosi, non implementa il tratto COPY
     let mutex_moved = mutex; //questo lo muove solamente, per copiare il riferimento dobbiamo usare ARC
@@ -97,7 +123,22 @@ fn main() {
         started = cvar.wait(started).unwrap();
     }
 
-
+    //-------------------------------CONCORRENZA COMPLETO: MUTEX + CONDVAR--------------------------------
+    println!("--------------------CONCORRENZA COMPLETO: MUTEX + CONDVAR--------------------");
+    let mut vec = vec![1, 2, 3, 4, 5];
+    thread::scope(|s| {
+        s.spawn(|| {
+            println!("{:?}", vec.len());
+        });
+        s.spawn(|| {
+            for i in &vec {
+                println!("{:?}", vec);
+            }
+        });
+    });
+    //con struttura MUTEX + CONDVAR
+    let data: SharedData<i32> = SharedData::new(Vec::with_capacity(10));
+    let shared_data2 = Arc::new(data);
 
     //------------------------------------CONCORRENZA: MESSAGGI CHANNEL ---------------------------
     println!("--------------------CONCORRENZA : MESSAGGI CHANNEL--------------------");

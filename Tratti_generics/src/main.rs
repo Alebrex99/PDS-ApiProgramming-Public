@@ -12,7 +12,7 @@ use tratti::Cilindro;
 use tratti::Figura3D;
 use tratti::CilindroGeneric;
 
-//--------------------------GESTIONE TRATTO CUSTOM--------------------------------------
+//--------------------------GESTIONE TRATTO CUSTOM: LEZIONE--------------------------------------
 /*tratti come figure geometriche: sto descrivendo la struttura di un possibile
 comportamento; se ho una figura 2D posso calcolare perimetro /area.
 &self : il perimetro /area lo calcolo a partire dall'obj che lo implementa. il &self di FIGURA2D sarà
@@ -70,6 +70,17 @@ impl Figura2D for Punto{
     }
 }
 
+//--------------------COMPORTAMENTO POLIMORFICO: LEZIONE-----------------
+//se ho una funzione che accetta (è chiamato su) un oggetto di TIPO FIGURA2D(come il riferimento ad interfaccia in java)
+fn f1(f: &dyn Figura2D){
+    //posso chiamare i metodi di Figura2D
+    println!("l'area vale: {}", f.area());
+    println!("il perimetro vale: {}", f.perimetro());
+}
+
+
+
+
 //------------------------------PROVE GENERICHE --------------------------------------
 struct Test;
 trait T3 {
@@ -100,14 +111,6 @@ impl Clone for TestCopy {
 impl Copy for TestCopy {}
 
 
-//--------------------COMPORTAMENTO POLIMORFICO: -----------------
-//se ho una funzione che accetta (è chiamato su) un oggetto di TIPO FIGURA2D(come il riferimento ad interfaccia in java)
-fn f1(f: &dyn Figura2D){
-    //posso chiamare i metodi di Figura2D
-    println!("l'area vale: {}", f.area());
-    println!("il perimetro vale: {}", f.perimetro());
-}
-
 fn main() {
 
     //----------------------------POLIMORFISMO IN RUST---------------------------------
@@ -119,7 +122,7 @@ fn main() {
     c.perimetro();//posso vedere chiare le caratteristiche di C e posso fare c.area ecc
     /*compilatore non ha bisogno di info particolari, sa che c è un
     tipo c è un tipo concreto e che impl una sua versione del metodo perimetro di figura2d. InASM
-    avrei direttamente la chiamata alla suaversione di perimetro, senza dubbi
+    avrei direttamente la chiamata alla sua versione di perimetro, senza dubbi
     (non ho bisogno di VTABLE, costa zero come qualunque altra chiamata*/
 
     //&DYN : USO DELLA VTABLE ANCHE IN RUST: POLIMORFISMO

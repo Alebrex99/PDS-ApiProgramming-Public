@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 mod Esame7Lug2023;
 
 fn make_box<T>(i : T) -> Box<T>{
@@ -11,10 +13,20 @@ struct Point {
       y: i16,
 }
 
-  enum PathCommand {
+enum PathCommand {
       Move(Point),
       Line(Point),
       Close,
+}
+
+pub struct Data{
+    Element :AsVector,
+    next: Rc<Data>
+}
+
+enum AsVector{
+    AsVector(Box::<Rc<i32>>),
+    None
 }
 
 fn main() {
@@ -28,6 +40,5 @@ fn main() {
     v.push(PathCommand::Line(Point{x:10, y:20}));
     v.push(PathCommand::Close);
     let slice = &v[..];
-
-
+    
 }
