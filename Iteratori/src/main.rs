@@ -36,21 +36,25 @@ fn main() {
     v6.iter_mut().for_each(|n| *n*=2); //SOLO COSI VIENE MODIFICATO ON PLACE L'ORIGINALE
     println!("v6: {:?}", v6);
 
-    //CONSUMO COMPLETO CONTENITORE
+
+    //----------------------ITERATOR- INTO ITERATOR : CONSUMO ---------------------
     println!("-----------------ITERATOR - INTO ITERATOR-----------------");
     let v = vec![1, 2, 3, 4, 5, 6];
+
+    //CONSUMO CONTENITORE
     for x in v { //sbriciola v e lo consuma
         println!("{}", x);
     }
     //println!("{:?}", v); // Errore: value borrowed here after move, V NON ESSITE PIU
 
-    //NON CONSUMO CONTENITORE
+    //ITER() : NON CONSUMO CONTENITORE
     let mut  v1 = vec![1, 2, 3, 4, 5, 6];
     for x in &v1 { //usato un riferimento in lettura (l'iteratore non può modificare il contenitore)
         println!("{}", x);
     }
     println!("{:?}", v1);
 
+    //NON CONSUMO CONTENITORE
     for x in &mut v1 { //V è un contenitore = implementazione di IntoIterator e chiamata a iter_mut()
         *x *=2; //mettiamo *x per accedere perchè il for con in è come se chiamasse iter_mut()
     }
@@ -65,7 +69,6 @@ fn main() {
     quindi controlliamo cosa succede. Anche se non gli ho tirati fuori tutti da V1,
     siccome ho cominciato a prenderne, V non è più buono, è stato consumato*/
     //println!("{:?}", v1);// Errore: value borrowed here after move, V CONSUMATO PER UNA PARTE
-
 
     //USO DELLA STRUCT (TUPLA) : COSA SUCCEDE QUANDO CONSUMI PER UNA PARTE IL VETTORE
     let v2 = vec![P(1), P(2), P(3), P(4), P(5), P(6)];

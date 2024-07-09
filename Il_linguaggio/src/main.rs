@@ -47,7 +47,7 @@ mod module1{
     }
     pub fn f() -> Test{
         let t = Test { x: 1, y: 2 };
-        let t1 = Test {x,y};
+        let t1 = Test {x:3,y:4};
         t1
     }
 }
@@ -59,22 +59,23 @@ fn modulo1(){
 
 
 
-
 static mut S_GLOBAL: S = S(10);
 const S_CONST: S = S(10);
 fn main() {
     //-----------------MEMORIA HEAP + STACK + DROP --------------------------
     //let s = S(3); //variabile locale
     //s.display(); //prendeva parametro &self, ce lo ha ma siccome è self lo ha prima con s. = &self
-    /*in JAVA quando scrivo s.toString(), esso ha un this implicito; Qui si scrive esplictiamente SEFL
+    /*in JAVA quando scrivo s.toString(), esso ha un this implicito; Qui si scrive esplictiamente SELF
     perchè si può passare in tanti modi, qui lo passiamo NON MODIFICABILE = NON MUT, perchè display non cambia nulla*/
 
     //VARIABILI LOCALI + DINAMICHE (BOX)
     println!("------------VARIABILI LOCALI + DINAMICHE (BOX)-----------");
     let s1 = S(1); //variabile locale
     let s2 = Box::new(S(2)); //crei un BOX, quindi spazio su heap, e ci metti S(2)
-    s1.display(); //stampa S(1) @0x7ffedf7f3f90 -> indirizzo su stack
-    s2.display(); //stampa S(2) @0x55f7b3b1b2a0 -> indirizzo su heap
+    s1.display(); //passa &s1 a display -> stampa S(1) @0x7ffedf7f3f90 -> indirizzo su stack
+    s2.display(); //passa il puntatore Box, s2 a display -> stampa S(2) @0x55f7b3b1b2a0 -> indirizzo su heap
+    println!("BOX: @{:p}", s2);
+    println!("BOX: @{:p}", &s2);
 
     //VARIABILI GLOBALI + COSTANTI
     unsafe {
@@ -88,10 +89,8 @@ fn main() {
     println!("S_CONST è una costante, posta in zona {:p}", &S_CONST);
 
 
-
     //-----------------------TUPLE----------------------------------
     let tupla = (1, "ciao", true);
-    let tupla2 : (i32) = (1);
     tupla.0;
 
 
@@ -117,6 +116,8 @@ fn main() {
     let slice_imm = &a[1..=3];
     let slice_copy = slice_imm;
     println!("{:?}", slice_imm);
+    let elem = slice_imm[1];
+    println!("{:?}", elem);
 
     //VEC
     let mut vec = Vec::new();
@@ -210,5 +211,7 @@ fn main() {
 
     //---------------------------TIPI COMPOSTI---------------------------------
     println!("----------------TIPI COMPOSTI-----------------");
+
+
 
 }

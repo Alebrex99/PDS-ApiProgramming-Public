@@ -34,7 +34,7 @@ impl ComplexNumber {
 }
 
 impl Add for ComplexNumber {
-    
+
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -46,7 +46,6 @@ impl Add for ComplexNumber {
 }
 
 impl Add<&ComplexNumber> for ComplexNumber {
-    
     type Output = Self;
 
     fn add(self, rhs: &Self) -> Self::Output {
@@ -59,7 +58,7 @@ impl Add<&ComplexNumber> for ComplexNumber {
 }
 
 
-impl Add<f64> for ComplexNumber {
+impl Add<f64> for ComplexNumber { //add complex number + real
     type Output = Self;
 
     fn add(self, rhs: f64) -> Self::Output {
@@ -144,6 +143,7 @@ impl Into<ComplexNumber> for f64 {
     
     fn into(self) -> ComplexNumber {
         ComplexNumber::from_real(self)
+        //ComplexNumber{real: self, imag:0.0}
     }
     
 }
@@ -155,7 +155,7 @@ impl  PartialEq for ComplexNumber {
 }
 
 impl Eq for ComplexNumber {
-    
+
 }
 
 impl PartialOrd for ComplexNumber {

@@ -5,7 +5,7 @@
 
 // suggestion: write a function find_sub(&str, &str) -> Option<(usize, &str)> that finds the first subsequence in a string, you can use it in all the following functions
 
-fn subsequences1<'a>(s: &'a str, seq: &str) -> Vec<(usize, &'a str)> {
+fn subsequences1(s: &str, seq: &str) -> Vec<(usize, &str)> {
     unimplemented!()
 }
 
@@ -56,6 +56,8 @@ pub fn demo3() {
         println!("Found subsequence at position {}: {}", off, sub);
     }
 }
+
+/*
 
 // DNA strings may be very long and we can get a lot of matches.
 // Therefore we want to process a subsequence as soon as we find it, without storing it in a vector
@@ -169,3 +171,4 @@ fn demo_dna_iter2() {
             )
         });
 }
+*/

@@ -199,6 +199,7 @@ fn main() {
     (*cilindro_ref).raggio = 20.0;
 
     //---------------------TRATTO DEREF -> PUOI LEGGERLO COME PUNTATORE------------------------
+    println!("------------TRATTO DEREF--------------");
     /*Normalmente prendi riferimento a c, ma siccome impl il tratto DEREF , cosi c.deref() prende il
     puntatoore associato a c. DEREF ha fatto si che struttura cerchio possa comportarsi come un puntaotre,
     usata cosi in alcune situe si possono usare cose che pur non essendo puntatori si possono usare
@@ -269,8 +270,10 @@ fn main() {
     //println!("{:?}", vec_ref); // riferimento torna in vita, error: value borrowed here after move
 
     let vec_imm = vec!['a', 'b', 'c']; //immutabile
-    let cell = Cell::new(vec_imm); //ma ora in CELL
+    let cell = Cell::new(vec_imm.clone()); //ma ora in CELL
+    let riferimento = &vec_imm;
     cell.set(vec!['a', 'b', 'd']); //muta il contenuto di CELL
+    println!("{:?}", riferimento);
     println!("{:?}", cell.take()); //['a', 'b', 'd'] //estraggo il dato da CELL che non impl COPY
 
     //REFCELL

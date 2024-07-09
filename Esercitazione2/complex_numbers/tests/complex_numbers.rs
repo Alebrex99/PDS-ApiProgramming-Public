@@ -26,7 +26,7 @@ pub fn test_add() {
     let b = ComplexNumber::new(1.0, 2.0);
 
     let c = a + b;
-
+    println!("{:?}", a); //se non implementi COPY, ma implementi CLONE , dovrai per forza fare un .clone()
     assert_eq!(c.to_tuple(), (2.0, 4.0));
 }
 
@@ -149,6 +149,24 @@ pub fn test_try_from_f64() {
 
     let a: ComplexNumber = 1.0.into();
     assert_eq!(a.to_tuple(), (1.0, 0.0));
+}
+
+//TEST CUSTOM MIO
+#[test]
+pub fn test_eq_ord() {
+    let a = ComplexNumber::new(1.0, 2.0);
+    let b = ComplexNumber::new(1.0, 2.0);
+    let c = ComplexNumber::new(2.0, 4.0);
+    let d = ComplexNumber::new(3.0, 6.0);
+    assert_eq!(a, b);
+    assert_ne!(a, c);
+    assert_eq!(a,a);
+    assert!(a < c);
+    assert!(c < d);
+    assert!(a < d);
+    assert!(a <= d);
+    assert!(d > a);
+    assert!(d >= a);
 }
 
 #[test]

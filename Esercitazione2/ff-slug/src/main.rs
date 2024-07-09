@@ -4,7 +4,7 @@ const SUBS_I: &str = "àáâäæãåāăąçćčđďèéêëēėęěğǵḧîï�
 const SUBS_O: &str = "aaaaaaaaaacccddeeeeeeeegghiiiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz";
 
 
-// with ieratators
+// with iterators
 #[allow(dead_code)]
 fn conv_alt(c: char) -> char {
     match c {
@@ -61,6 +61,22 @@ trait MySlug {
     fn to_slug(&self) -> String;
 }
 
+//--------------------MIA IMPLEMENTAZIONE-----------------------
+/*
+impl MySlug for &str {
+    fn is_slug(&self) -> bool {
+        let s = slugify(self);
+        //il metodo crea un &( di ciò su cui lo chiamo)
+        let str = self;
+        s == *self
+    }
+    fn to_slug(&self) -> String {
+        slugify(self)
+    }
+}*/
+
+
+//---------------------------SOLUZIONI----------------------------
 // naive implementation of the trait for &str and String
 //impl MySlug for &str {
 //    fn is_slug(&self) -> bool {
@@ -94,7 +110,13 @@ impl<T: AsRef<str>> MySlug for T {
         slugify(self.as_ref())
     }
 }
-
+#[derive(Debug)]
+struct Test(i32, &'static str);
+impl AsRef<str> for Test{
+    fn as_ref(&self) -> &str {
+        self.1
+    }
+}
 
 #[allow(dead_code)]
 fn demo_slug_trait() {
@@ -131,6 +153,11 @@ fn main() {
     let slug: &dyn MySlug = &s1;
     println!("{}", slug.is_slug());
 
+    //QUALUNQUE TIPO CHE IMPL ASREF
+    let t = Test(10, "Test");
+    println!("{:?}", t.as_ref());
+    let ts = t.to_slug();
+    println!("{:?}", ts);
 
     let args: Args = Args::parse();
 

@@ -1,22 +1,29 @@
+use std::cell::Cell;
+use std::ops::Deref;
+use std::rc::Rc;
 use std::sync::mpsc::{channel, sync_channel};
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread;
+use std::time::Duration;
 
-
-struct SharedData<T>{
+struct SharedData2<T>{
     data: Mutex<Vec<T>>,
-    condvar: Condvar
+    condvar: Condvar,
+    s: String
 }
 
-impl<T> SharedData<T> {
+impl<T> SharedData2<T> {
     fn new(data: Vec<T>) -> Self{
-        SharedData {
+        SharedData2 {
             data: Mutex::new(data),
-            condvar: Condvar::new()
+            condvar: Condvar::new(),
+            s: String::from("ciao")
         }
     }
     fn push(&self, value: T) {
         let mut data = self.data.lock().unwrap();
+        //let a = self.s; //ATTENZIONE AI MOVIMENTI
+        let a = &self.s;
         data.push(value);
         self.condvar.notify_one();
     }
@@ -29,11 +36,61 @@ impl<T> SharedData<T> {
     }
 }
 
-fn main() {
+struct SharedData{
+    mutex:Mutex<bool>,
+    cv:Condvar
+}
+impl SharedData{
+    //Metodo costruttore
+    pub fn new(condition:bool)->Self{
+        SharedData { mutex:Mutex::new(condition), cv:Condvar::new() }
+    }
+    pub fn change_and_notify(&self){
+        let mut data=self.mutex.lock().unwrap();
+        *data = true;
+        //Mandiamo la notifica alla condvar
+        self.cv.notify_one();
+    }
+    pub fn looper(&self){
+        loop {
+            //Il thread aspetta per una notifica. Nel caso siano passati 100 misecondi smette di aspettare
+            let lock = self.cv.wait_timeout(self.mutex.lock().unwrap(), Duration::from_millis(100)).unwrap();
+            if*lock.0 == true{
+                //Il thread ha ricevuto una notifica dato che il valore è stato cambiato, quindi esco
+                print!("Il valore è cambiato quindi posso uscire dal ciclo correttamente ");
+                if !lock.1.timed_out() {
+                    println!("e non c'è stato time-out");
+                }
+                break
+            }
+            if lock.1.timed_out() {
+                println!("E' scaduto il timer ma il valore non è cambiato. Ricomincio il ciclo");
+            }
+        }
+    }
+}
 
-    //-------------------------------------CONCORRENZA: STATO CONDIVISO THREADS + ARC + MUTEX----------------------------------
+fn main() {
+    //-------------------------THREADS--------------------------------
+    println!("----------------THREADS-----------------");
+    let mut a = vec![1, 2, 3];
+    let mut x = 0;
+    let string = "ciao".to_string();
+    let builder = thread::Builder::new()
+        .name("t1".into())
+        .stack_size(100_000); //N bytes
+    builder.spawn( || { //COMPILA LO STESSO: perchè anche senza move in tal caso stai muovendo il vec a dentro il thread
+        a;
+    }).unwrap().join().unwrap();
+
+    /*let handle = thread::spawn(|| {
+        println!("Hello from a thread! {:?}", string); //ERROR: non puoi passare per riferimento
+    });*/
+
+
+    //-------------------------------------CONCORRENZA: ARC + MUTEX + TRATTI SYNC SEND----------------------------------
     println!("------------CONCORRENZA STATO CONDIVISO: THREADS + ARC + MUTEX--------------");
-    //MUTEX NON E' COPY, VIENE MOSSO
+    //MUTEX NON E' COPY, VIENE MOSSO, NON MUTABLE
     let mutex = Mutex::new(0); //non condivisibile cosi, non implementa il tratto COPY
     let mutex_moved = mutex; //questo lo muove solamente, per copiare il riferimento dobbiamo usare ARC
     //println!("{:?}", mutex); //error: value borrowed here after move
@@ -45,23 +102,51 @@ fn main() {
     //RIFERIMENTO A MUTEX: BORROW
     let mutex2 = Mutex::new(0);
     let a = &mutex2; //borrowed possibile solo in lettura
-    println!("{:?}", *a); //Mutex { data: 0 }
+    println!("{:?}", a); //Mutex { data: 0 }
 
     //THREAD : SYNC E SEND
-    /*let i=0; //impl SYNC
-    let arc = Arc::new(&i);
-    let t3 = thread::spawn(move || {
-        println!("{}", *arc);
+    let my_cell = Cell::new(42);
+    // Clona il Cell per entrambi i thread
+    let thread1_cell = my_cell.clone();
+    let thread2_cell = my_cell.clone();
+    // Thread 1: Incrementa il valore nel Cell
+    let handle1 = thread::spawn(move || {
+        thread1_cell.set(thread1_cell.get() + 1);
+        println!("Thread1: Valore nel Cell: {}", thread1_cell.get());
     });
-    t3.join().unwrap();*/
+    // Thread 2: Legge il valore dal Cell
+    let handle2 = thread::spawn(move || {
+        thread2_cell.set(thread2_cell.get() - 1);
+        println!("Thread2: Valore nel Cell: {}", thread2_cell.get()-1);
+    });
+    println!("Main Thread: Valore nel Cell: {}", my_cell.get());
+    // Attendi che entrambi i thread terminino
+    handle1.join().unwrap();
+    handle2.join().unwrap();
 
+    //SCOPE
+    let numbers = vec![1, 2, 3];
+    let r = &numbers;
+    thread::scope(|s| {
+        s.spawn(|| {
+            r.len();
+            println!("length: {:?}", numbers);
+            // riferimento a variabile locale che non deve essere catturata con move
+        });
+        s.spawn(|| {
+            for n in &numbers {
+                println!("{n}");
+            }
+        });
+    });
 
+    //--------------------------------CONDIVISIONE DELLO STATO TRA THREADS--------------------------------
+    println!("------------------CONDIVISIONE DELLO STATO TRA THREADS------------------");
     //ESEMPIO DI CONDIVISIONE DI DATI TRA THREADS
     let a: Arc<Mutex<i32>> = Arc::new(Mutex::new(0));
     let a1: Arc<Mutex<i32>> = a.clone();
     let a2: Arc<Mutex<i32>> = a.clone();
     let a3 = Arc::clone(&a);
-
     let t1 = thread::spawn(move || {
         for _ in 0..10_000_000 {
             let mut l = a1.lock().unwrap();
@@ -69,7 +154,6 @@ fn main() {
 
         }
     });
-
     let t2= thread::spawn(move || {
         for _ in 0..10_000_000 {
             let mut l = a2.lock().unwrap();
@@ -78,9 +162,7 @@ fn main() {
     });
     t1.join().unwrap();
     t2.join().unwrap();
-
     println!("{}", a.lock().unwrap());
-
 
     //THREADS SHARED DATA
     let shared_data = Arc::new(Mutex::new(Vec::new()));
@@ -101,16 +183,69 @@ fn main() {
     let v = shared_data.lock().unwrap();
     println!("{:?}", *v); //stampa [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
+    //RW LOCK
+    let data = Arc::new(RwLock::new(vec![1, 2, 3]));
+    let data_clone1 = Arc::clone(&data);
+    let data_clone2 = Arc::clone(&data);
+    let data_clone3 = Arc::clone(&data);
+    let reader1 = thread::spawn(move || {// Threadin lettura 1
+        let guard = data_clone1.read().unwrap();
+        println!("Thread lettura 1: {:?}", *guard);
+    });
+    let reader2 = thread::spawn(move || {// Thread in lettura 2
+        thread::sleep(Duration::from_secs(1));
+        let guard = data_clone2.read();
+        match guard {
+            Ok(guard) => { println!("Valore letto con successo: {:?}", guard);  }
+            Err(poison_error) => {
+                // Gestiamo l'errore derivante dal Mutexin stato "poisoned"
+                let mut guard = poison_error.into_inner();
+                println!("Reader 2 -errore: il Mutex è stato avvelenato, comunque GUARD è: {:?}", *guard);}
+        }
+    });
+    let writer = thread::spawn(move || {// Thread in scrittura (che provoca uno stato "poisoned")
+        let mut guard = data_clone3.write().unwrap();
+        guard.push(4); // Prova a inserire un elemento nella struttura dati
+        panic!("Oops, ho fatto un errore!"); // Simula un errore (ad esempio, un panic)
+    });
+    reader1.join().unwrap();
+    reader2.join().unwrap();
+    writer.join().unwrap_err();
+
 
     //-------------------------------ATOMIC--------------------------------
     println!("--------------------ATOMIC----------------------------");
 
-    //-----------------------------CONVAR--------------------------------
+
+    //-----------------------------CONDIVISIONE DELLO STATO : MUTEX + CONDVAR--------------------------------
+    println!("--------------------CONDIVISIONE DELLO STATO : MUTEX + CONDVAR--------------------");
+    //ESEMPIO
+    let pair = Arc::new( (Mutex::new(false), Condvar::new()) );
+    let pair2 = Arc::clone(&pair);
+    // Inside our lock, spawn a new thread and wait for it to start
+    thread::spawn(move || {
+        let (lock, cvar) = &*pair2;
+        let mut started = lock.lock().unwrap();
+        thread::sleep(Duration::from_secs(5));
+        // *started = true;
+        cvar.notify_one();
+    });
+    // Wait for the thread to start up
+    let (lock, cvar) = &*pair;
+    let mut started = lock.lock().unwrap();
+
+    started = cvar.wait(started).unwrap();
+    println!("Thread started!");
+
+
+    //ESEMPIO COMPLETO: ESEENZIALE IL CICLO WHILE
+    /*
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair2 = Arc::clone(&pair);
     // Inside of our lock, spawn a new thread, and then wait for it to start.
     thread::spawn(move|| {
-        let (lock, cvar) = &*pair2;
+        let lock = pair2.0.lock().unwrap(); //no problem
+        let (lock, cvar) = &*pair2; //pair.deref()
         let mut started = lock.lock().unwrap();
         *started = true;
         // We notify the condvar that the value has changed.
@@ -121,30 +256,18 @@ fn main() {
     let mut started = lock.lock().unwrap();
     while !*started {
         started = cvar.wait(started).unwrap();
-    }
+    } //->CODICE CHE VIENE ESEGUITO DOPO CHE IL THREAD HA INIZIATO
+    */
 
-    //-------------------------------CONCORRENZA COMPLETO: MUTEX + CONDVAR--------------------------------
-    println!("--------------------CONCORRENZA COMPLETO: MUTEX + CONDVAR--------------------");
-    let mut vec = vec![1, 2, 3, 4, 5];
-    thread::scope(|s| {
-        s.spawn(|| {
-            println!("{:?}", vec.len());
-        });
-        s.spawn(|| {
-            for i in &vec {
-                println!("{:?}", vec);
-            }
-        });
-    });
-    //con struttura MUTEX + CONDVAR
-    let data: SharedData<i32> = SharedData::new(Vec::with_capacity(10));
-    let shared_data2 = Arc::new(data);
+
+
+
 
     //------------------------------------CONCORRENZA: MESSAGGI CHANNEL ---------------------------
     println!("--------------------CONCORRENZA : MESSAGGI CHANNEL--------------------");
-    //codice con 1 sender e 1 recevier
-
-    /*let (tx, rx) = channel::<String>();  //funz channel crea un canale e restituisce una tupla(sender, receiver)
+    //1 SENDER + 1 RECEIVER
+/*
+    let (tx, rx) = channel::<String>();  //funz channel crea un canale e restituisce una tupla(sender, receiver)
     let t1 = thread::spawn(move || {  //passo lambda con "move" perchè voglio che il thread si prenda la responsabilità di possedere quello che usa
         for i in 0..3 {
             println!("Sending {}", i);
@@ -162,13 +285,12 @@ fn main() {
         println!("Receiver done!");
     });
     t1.join().unwrap();
-    t2.join().unwrap();*/
-
+    t2.join().unwrap();
+ */
 /*
 sender prepara i suoi dati, li manda (se il ricevitore non è morto)
 receiver, finchè il sender è vivo, riceve dati
 quando il thread principale finisce, tutti i thread secondari muoiono. quindi devo aspettare i thread altrimneti non riesco (devo fare t.join.unwrap)
-
 console:
 il mittente parte per primo e invia tutti e tre i dati anche se il receiver non sta ricevendo (questo perchè il canale è unbounded quindi può contenere tanti messaggi).
 finisce di inviare i dati (message: sender done!)
@@ -176,8 +298,7 @@ quando il recevier riesce a partire, inizia a ricevere i dati nell'ordine in cui
 */
 
 
-    //codice con n senders e 1 recevier
-
+    //N SENDERS + 1 RECEIVER
     let (tx, rx) = channel::<String>(); //crei il TX originale
     let mut handles = vec![];
     for t in 1..4 {
@@ -199,11 +320,16 @@ quando il recevier riesce a partire, inizia a ricevere i dati nell'ordine in cui
         while let Ok(v) = rx.recv() {
             println!("Got {}", v);
         }
+        if let Err(e) = rx.recv(){
+            println!("DROPPED ALL SENDERS, {}", e);
+        }
         println!("Receiver done!");
     }));
     for h in handles {
         h.join().unwrap();
     }
+
+
 
 /*
 al termine del for ho 4 senders (il primo creato alla riga 42, gli altri 3 creati con il for).
