@@ -9,6 +9,7 @@ mod Esame7Lug2023;
 mod Esame20Giu2023;
 mod Esame16Gen2023;
 mod Esame25Giu2024;
+mod Esame8Set2022;
 
 fn make_box<T>(i : T) -> Box<T>{
     let b = Box::new(i);
@@ -51,5 +52,7 @@ fn main() {
 
     let c = Cache::new();
     c.put(1, 2, Duration::from_secs(1));
+
+
     
 }

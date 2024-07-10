@@ -5,7 +5,7 @@ pub struct CircularBuffer<T> {
     data: Vec<T>,
     tail: usize,
     head: usize,
-    len: usize
+    len: usize //numero elementi inseriti nel buffer
 }
 
 #[derive(Debug, PartialEq)]
@@ -13,6 +13,7 @@ pub enum Error {
     EmptyBuffer,
     FullBuffer,
 }
+
 
 impl<T: Default> CircularBuffer<T> {
     pub fn new(capacity: usize) -> Self {
@@ -32,6 +33,8 @@ impl<T: Default> CircularBuffer<T> {
             return Err(Error::FullBuffer);
         } else {
             self.data[self.tail] = _element;
+            /*es. numero di elem nel VEC = 10 di default, tail = 0 -> indice(resto 0:20) = 0 ; tail = 1 -> indice = 1, ...
+            quando arrivo a 20 ritorni dall'inizio: tail = 20 -> indice(resto 20:20) = 0 */
             self.tail = (self.tail + 1) % self.data.len();
             self.len += 1;
             return Ok(());
@@ -42,7 +45,8 @@ impl<T: Default> CircularBuffer<T> {
         if self.len == 0 {
             return Err(Error::EmptyBuffer);
         } else {
-            let element = mem::take(&mut self.data[self.head]);
+            let element = mem::take(&mut self.data[self.head]); //preleva il dato e lo sostituisce con il default senza lasciare buco
+            //let element = &mut self.data[self.head]; //prende un &mut T dal buffer
             self.head = (self.head + 1) % self.data.len();
             self.len -= 1;
             return Ok(element);
@@ -82,6 +86,8 @@ impl<T: Default> CircularBuffer<T> {
         if index >= self.len {
             panic!("out of bounds");
         }
+        /*avendo già vettore con occupati 0,1,2,3,4 e volessi push un elemento al posto 0
+        allora la */
         (self.head + index) % self.data.len()
     }
 

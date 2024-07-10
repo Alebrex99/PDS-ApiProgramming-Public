@@ -220,7 +220,7 @@ fn main() {
     //-----------------------------CONDIVISIONE DELLO STATO : MUTEX + CONDVAR--------------------------------
     println!("--------------------CONDIVISIONE DELLO STATO : MUTEX + CONDVAR--------------------");
     //ESEMPIO
-    let pair = Arc::new( (Mutex::new(false), Condvar::new()) );
+    /*let pair = Arc::new( (Mutex::new(false), Condvar::new()) );
     let pair2 = Arc::clone(&pair);
     // Inside our lock, spawn a new thread and wait for it to start
     thread::spawn(move || {
@@ -235,16 +235,14 @@ fn main() {
     let mut started = lock.lock().unwrap();
 
     started = cvar.wait(started).unwrap();
-    println!("Thread started!");
+    println!("Thread started!");*/
 
 
     //ESEMPIO COMPLETO: ESEENZIALE IL CICLO WHILE
-    /*
     let pair = Arc::new((Mutex::new(false), Condvar::new()));
     let pair2 = Arc::clone(&pair);
     // Inside of our lock, spawn a new thread, and then wait for it to start.
     thread::spawn(move|| {
-        let lock = pair2.0.lock().unwrap(); //no problem
         let (lock, cvar) = &*pair2; //pair.deref()
         let mut started = lock.lock().unwrap();
         *started = true;
@@ -257,7 +255,6 @@ fn main() {
     while !*started {
         started = cvar.wait(started).unwrap();
     } //->CODICE CHE VIENE ESEGUITO DOPO CHE IL THREAD HA INIZIATO
-    */
 
 
 
@@ -297,19 +294,19 @@ finisce di inviare i dati (message: sender done!)
 quando il recevier riesce a partire, inizia a ricevere i dati nell'ordine in cui sono stati inviati finchè non finisce.
 */
 
-
     //N SENDERS + 1 RECEIVER
     let (tx, rx) = channel::<String>(); //crei il TX originale
     let mut handles = vec![];
     for t in 1..4 {
-        let tx = tx.clone(); //per ogni thread ho fatto una copia. (N+1 TX) creo una tx qui dentro che sta nello stack ed è clone dell'altra tx
+        let tx = tx.clone(); //per ogni thread ho fatto una copia del tx. (N+1 TX) creo una tx qui dentro che sta nello stack ed è clone dell'altra tx
         handles.push(thread::spawn(move || { //avendo scritto move, il primo si mangia la tx, ma il secondo poi non ce l'ha più quindi devo clonare
             for i in 0..3 { //scegli numero mex di invio
                 println!("Thread {t} sending {}", i);
                 if tx.send(format!("Message {}.{}", t, i)).is_err() { //l'if serve a dire che per qualche motivo il ricevitore dovesse morire, il sender si ferma e non manda neanche il dato
-                    println!("Aborting...");
+                    println!("Aborting... ");
                     break;
                 }
+
             }
             println!("Sender {t} done!");
         }));
@@ -329,8 +326,6 @@ quando il recevier riesce a partire, inizia a ricevere i dati nell'ordine in cui
         h.join().unwrap();
     }
 
-
-
 /*
 al termine del for ho 4 senders (il primo creato alla riga 42, gli altri 3 creati con il for).
 quindi ho n+1 senders. Quando i thread finiscono e muoiono mi rimane solo una copia -> l'originale.
@@ -343,17 +338,14 @@ Quando mando in esecuzione vedo che i thread iniziano a inviare messaggi in ordi
 es: t1 sends 0, t2 sends 0, t2 sends 1, t2 sends 2, t1 sends 1
 stessa cosa il receiver può iniziare a ricevere anche se il thread senders non ha finito di inviare, ma riceverà comunque i messaggi in ordine
 
-RIMOZIONE DEL DROP (TX) : PROBLEMA :
+RIMOZIONE DEL DROP (TX) : PROBLEMA : DEADLOCK
 se rimuovo la drop(tx) il programma compila ma si pianta perchè non riesce a terminare perchè il receiver ha ancora un sender attaccato.
 nessuno sta usando questo sender, ma il receiver non può saperlo.
 Il sender aspetta che il receiver finisca, ma non può finire perchè sta ancora aspettando che il sender mandi qualcosa. Ho una situazione di deadlock
 */
 
-
-
-    //esempio sync_channel
-    /*
-    let (tx, rx) = sync_channel::<String>(1);  //buffer può contenere solo un messaggio
+    //ESEMPIO SYNC CHANNEL
+    /*let (tx, rx) = sync_channel::<String>(1);  //buffer può contenere solo un messaggio
     let mut handles = vec![];
     for t in 1..4 {
         let tx = tx.clone(); //creo una tx qui dentro che sta nello stack ed è clone dell'altra tx
@@ -378,12 +370,26 @@ Il sender aspetta che il receiver finisca, ma non può finire perchè sta ancora
     }));
     for h in handles {
         h.join().unwrap();
-    }*/
+    }
+     */
 
 /*
 se ho un buffer di 0 deve succedere che sender e receiver devono per forza incontrarsi (randevoux), devono scambiarsi direttamente il messaggio
 finchè il recever non c'è, il sender non può mandare.
 tutti provano ad inviare ma finchè non arriva il receiver non si riesce
 */
+
+
+    //ESEMPIO SYNC CHANNEL 2
+    println!("------------------SYNC CHANNEL 2------------------");
+    let (sender, receiver) = sync_channel(1);
+    // this returns immediately
+    sender.send(1).unwrap();
+    thread::spawn(move|| {
+        // this will block until the previous message has been received
+        sender.send(2).unwrap();
+    });
+    println!("{}", receiver.recv().unwrap());
+    println!("{}", receiver.recv().unwrap());
 }
 

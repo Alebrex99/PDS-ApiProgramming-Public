@@ -114,10 +114,17 @@ impl <T: Send> DelayedQueueMAL<T>{
             let greater = data.peek().unwrap();
             let i = greater.i;
             //il primo elemento è quello più grande, non voglio toglierlo, può non essere ancora scaduto
-            if i<now{ //il dato è scaduto oltrepassata
+            if i<now{ //il dato è scaduto
                 Some(data.pop().unwrap().t);
             }
-            else {
+            else { //se il dato non è scaduto
+                //ATTESA
+                /*
+                1) attendo che il dato arrivi alla sua scadenza (intervallo di tempo tra il suo istante e il NOW.
+                rimango in wait per la durata di tale TIMEOUT.
+                2) se durante l'attesa il contenuto della coda cambia (SIGNAL), ovvero qualcuno inserisce un elemento con OFFER
+                allora dovrò ricercare di nuovo l'ultimo, esco dalla WAIT, ripercorro il WHILE di nuovo
+                */
                 /*dovrò fare il time out della differenza. può darsi che quello in coda sia l'ultimo messo
                 che non è ancora scaduto, nessuno aggiungerà più nulla (nessuno farà una notify), ma
                 devo darmi una attesa per un tempo */
