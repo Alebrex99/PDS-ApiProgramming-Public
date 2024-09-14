@@ -65,6 +65,18 @@ fn cambia (myref: & mut Box<i32>) -> &mut Box<i32>
 
 fn main() {
     //----------------------------INTRODUZIONE AL LINGUAGGIO----------------------------
+
+    let mut data = vec![1, 2, 3, 4, 5];
+    data.push(60);
+    let mut process_data = move || {
+        data.push(50);
+        let count = data.iter().filter(|&x| x % 2 == 0).count();
+        println!("Numero: {:?}", count);
+    };
+
+    process_data();
+    data.push(10);
+
     println!("-----------------INTRODUZIONE AL LINGUAGGIO: ------------------");
     //SHADOWING
     let x = 5; //shadow
